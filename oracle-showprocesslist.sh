@@ -47,7 +47,7 @@ function GetSql() {
 	fi
 	#simple
 	if [ ${SIMPLE} -eq 1 ]; then
-		wk="${wk} select a.sid,a.serial# as SERIAL,CASE a.status WHEN 'ACTIVE' THEN 'A' ELSE 'I' END as status,round((sysdate -a.SQL_EXEC_START) * 24 * 60 * 60,0) as "ACT_TM"
+		wk="${wk} select a.sid,a.serial# as SERIAL,CASE a.status WHEN 'ACTIVE' THEN 'A' ELSE 'I' END as status,CASE a.type WHEN 'BACKGROUND' Then 0 else LAST_CALL_ET END as ACT_TM
 		,a.username,a.MACHINE,a.WAIT_CLASS,a.seconds_in_wait as WAITTM,a.LOGON_TIME 
 		from v\$session a where 1=1 ${AUSER} ${STATUS} order by a.status,a.sid,a.username;\n"
 		echo "${wk}"
@@ -56,7 +56,7 @@ function GetSql() {
 	if [ ${FULL} -eq 0 ]; then
 		wk="${wk} column sql_text format a60\n"
 		wk="${wk} column sql_text truncated\n"
-		SELECT="SELECT a.sid,a.serial# as SERIAL,b.sql_text,CASE a.status WHEN 'ACTIVE' THEN 'A' ELSE 'I' END as status ,round((sysdate -a.SQL_EXEC_START) * 24 * 60 * 60,0) as "ACTIVE_TIME",a.username
+		SELECT="SELECT a.sid,a.serial# as SERIAL,b.sql_text,CASE a.status WHEN 'ACTIVE' THEN 'A' ELSE 'I' END as status ,CASE a.type WHEN 'BACKGROUND' Then 0 else LAST_CALL_ET END as ACT_TM,a.username
 				,a.OSUSER,a.MACHINE ,a.WAIT_CLASS,a.event,a.seconds_in_wait as WAITTM,a.BLOCKING_SESSION,a.program,a.LOGON_TIME 
 				FROM v\$session a
 				LEFT JOIN  ${TABLE} b ON a.sql_id=b.sql_id and piece =0
@@ -65,7 +65,7 @@ function GetSql() {
 	else
 		wk="${wk} column sql_text format a768\n"
 		wk="${wk} column sql_text truncated\n"
-		SELECT="SELECT a.sid,a.serial# as SERIAL,CASE a.status WHEN 'ACTIVE' THEN 'A' ELSE 'I' END as status,round((sysdate -a.SQL_EXEC_START) * 24 * 60 * 60,0) as "ACT_TM" ,a.seconds_in_wait as WAITTM,b.sql_text  
+		SELECT="SELECT a.sid,a.serial# as SERIAL,CASE a.status WHEN 'ACTIVE' THEN 'A' ELSE 'I' END as status,CASE a.type WHEN 'BACKGROUND' Then 0 else LAST_CALL_ET END as ACT_TM ,a.seconds_in_wait as WAITTM,b.sql_text  
 				FROM v\$session a
 				LEFT JOIN (SELECT sql_id,listagg(SQL_TEXT) WITHIN GROUP (ORDER BY PIECE) as SQL_TEXT FROM v\$sqltext WHERE PIECE <= 13 GROUP BY sql_id ) b ON a.sql_id=b.sql_id
 				WHERE 1=1 ${AUSER} ${STATUS}
